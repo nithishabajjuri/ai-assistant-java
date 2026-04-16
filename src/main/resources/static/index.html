@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Nithi My Assistant</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#00ff44"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Nithi My Assistant"/>
+<link rel="apple-touch-icon" href="/icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #050f05;
+    --border: #0d2e0d;
+    --green: #00ff44;
+    --green2: #00cc33;
+    --green3: #009922;
+    --muted: #336633;
+    --text: #ccffcc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 68, 0.02) 2px,
+      rgba(0, 255, 68, 0.02) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Header */
+  .header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a1a0a;
+    box-shadow: 0 0 12px rgba(0,255,68,0.3);
+    flex-shrink: 0;
+  }
+
+  .sound-bars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 20px;
+  }
+
+  .sound-bars span {
+    display: block;
+    width: 3px;
+    background: var(--green);
+    border-radius: 2px;
+    animation: barPulse 1.2s ease-in-out infinite;
+  }
+  .sound-bars span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+  .sound-bars span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+  .sound-bars span:nth-child(3) { height: 20px; animation-delay: 0.3s; }
+  .sound-bars span:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+  .sound-bars span:nth-child(5) { height: 8px;  animation-delay: 0.6s; }
+
+  @keyframes barPulse {
+    0%, 100% { transform: scaleY(1); opacity: 0.7; }
+    50% { transform: scaleY(0.5); opacity: 1; }
+  }
+
+  .header-info h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px rgba(0,255,68,0.5);
+  }
+
+  .header-info p {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-left: auto;
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Quick action buttons */
+  .quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .quick-actions::-webkit-scrollbar { display: none; }
+
+  .qa-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .qa-btn:hover, .qa-btn:active {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 8px rgba(0,255,68,0.2);
+  }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 3px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    animation: fadeUp 0.25s ease;
+    max-width: 85%;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.nithi { align-self: flex-start; align-items: flex-start; }
+
+  .msg-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .msg.user .msg-label { color: var(--muted); }
+  .msg.nithi .msg-label { color: var(--green3); }
+
+  .msg-bubble {
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .msg.user .msg-bubble {
+    background: #0a2a0a;
+    border: 1px solid var(--green3);
+    color: var(--text);
+    border-bottom-right-radius: 3px;
+  }
+
+  .msg.nithi .msg-bubble {
+    background: #050f05;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 3px;
+  }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.6rem 0.9rem;
+    background: #050f05;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    border-bottom-left-radius: 3px;
+    width: fit-content;
+  }
+
+  .typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: typingDot 1s ease-in-out infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingDot {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Empty state */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .empty-state .big-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: var(--green3);
+    letter-spacing: 0.1em;
+  }
+
+  .empty-state p {
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+
+  /* Input bar */
+  .input-bar {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .input-bar textarea {
+    flex: 1;
+    background: #0a1a0a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.4;
+  }
+
+  .input-bar textarea:focus {
+    border-color: var(--green3);
+    box-shadow: 0 0 8px rgba(0,255,68,0.1);
+  }
+
+  .send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--green3);
+    background: #0a2a0a;
+    color: var(--green);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .send-btn:hover, .send-btn:active {
+    background: var(--green3);
+    color: #000;
+    box-shadow: 0 0 12px rgba(0,255,68,0.4);
+  }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #050f05;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+  }
+
+  .modal h3 {
+    font-family: 'Orbitron', monospace;
+    color: var(--green);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+  }
+
+  .modal input, .modal textarea, .modal select {
+    width: 100%;
+    background: #0a1a0a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .modal input:focus, .modal textarea:focus, .modal select:focus {
+    border-color: var(--green3);
+  }
+
+  .modal select option { background: #050f05; }
+
+  .modal-btns {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .modal-btns button {
+    flex: 1;
+    padding: 0.65rem;
+    border-radius: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .modal-btns button.primary {
+    background: #0a2a0a;
+    border-color: var(--green3);
+    color: var(--green);
+  }
+
+  .modal-btns button.primary:hover {
+    background: var(--green3);
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo-circle">
+    <div class="sound-bars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="header-info">
+    <h1>NITHI</h1>
+    <p>MY ASSISTANT · POWERED BY AI</p>
+  </div>
+  <div class="status-dot"></div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <button class="qa-btn" onclick="openModal('food')">🍕 Order Food</button>
+  <button class="qa-btn" onclick="openModal('email')">📧 Send Email</button>
+  <button class="qa-btn" onclick="openModal('call')">📞 Make Call</button>
+  <button class="qa-btn" onclick="resetChat()">🔄 Reset</button>
+</div>
+
+<!-- Chat Area -->
+<div class="chat-area" id="chatArea">
+  <div class="empty-state" id="emptyState">
+    <div class="big-icon">🤖</div>
+    <h2>NITHI ONLINE</h2>
+    <p>Your personal AI assistant is ready.<br/>Ask me anything or use the quick actions above.</p>
+  </div>
+</div>
+
+<!-- Input Bar -->
+<div class="input-bar">
+  <textarea id="msgInput" placeholder="Type a message..." rows="1"
+    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button class="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<!-- Food Modal -->
+<div class="modal-overlay" id="foodModal" onclick="closeModalOnBg(event, 'food')">
+  <div class="modal">
+    <h3>🍕 ORDER FOOD</h3>
+    <input type="text" id="foodItem" placeholder="What do you want? (e.g. biryani, pizza)"/>
+    <select id="foodPlatform">
+      <option value="swiggy">Swiggy</option>
+      <option value="zomato">Zomato</option>
+      <option value="ubereats">Uber Eats</option>
+      <option value="doordash">DoorDash</option>
+      <option value="grubhub">Grubhub</option>
+    </select>
+    <div class="modal-btns">
+      <button onclick="closeModal('food')">Cancel</button>
+      <button class="primary" onclick="orderFood()">Open App →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="emailModal" onclick="closeModalOnBg(event, 'email')">
+  <div class="modal">
+    <h3>📧 SEND EMAIL</h3>
+    <input type="email" id="emailTo" placeholder="To: email@example.com"/>
+    <input type="text" id="emailSubject" placeholder="Subject"/>
+    <textarea id="emailBody" placeholder="Message..." rows="3"></textarea>
+    <div class="modal-btns">
+      <button onclick="closeModal('email')">Cancel</button>
+      <button class="primary" onclick="sendEmail()">Send ➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- Call Modal -->
+<div class="modal-overlay" id="callModal" onclick="closeModalOnBg(event, 'call')">
+  <div class="modal">
+    <h3>📞 MAKE A CALL</h3>
+    <input type="tel" id="callTo" placeholder="Phone number e.g. +911234567890"/>
+    <input type="text" id="callMessage" placeholder="Message to speak when answered"/>
+    <div class="modal-btns">
+      <button onclick="closeModal('call')">Cancel</button>
+      <button class="primary" onclick="makeCall()">Call ➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const emptyState = document.getElementById('emptyState');
+const msgInput = document.getElementById('msgInput');
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+async function sendMessage() {
+  const text = msgInput.value.trim();
+  if (!text) return;
+
+  addMessage('user', text);
+  msgInput.value = '';
+  msgInput.style.height = 'auto';
+
+  const typing = addTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json();
+    typing.remove();
+    addMessage('nithi', data.success ? data.reply : '❌ ' + data.error);
+  } catch (e) {
+    typing.remove();
+    addMessage('nithi', '❌ Cannot reach server. Make sure it is running.');
+  }
+}
+
+async function resetChat() {
+  await fetch('/api/reset', { method: 'POST' });
+  chatArea.innerHTML = '';
+  chatArea.appendChild(emptyState);
+  emptyState.style.display = 'flex';
+}
+
+function addMessage(role, text) {
+  if (emptyState.parentElement) emptyState.remove();
+
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + role;
+
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'user' ? 'You' : 'Nithi';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+
+  msg.appendChild(label);
+  msg.appendChild(bubble);
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return msg;
+}
+
+function addTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg nithi';
+  wrap.innerHTML = `<div class="msg-label">Nithi</div>
+    <div class="typing"><span></span><span></span><span></span></div>`;
+  chatArea.appendChild(wrap);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return wrap;
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+
+function openModal(name) {
+  document.getElementById(name + 'Modal').classList.add('open');
+}
+
+function closeModal(name) {
+  document.getElementById(name + 'Modal').classList.remove('open');
+}
+
+function closeModalOnBg(e, name) {
+  if (e.target === e.currentTarget) closeModal(name);
+}
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
+
+async function orderFood() {
+  const food     = document.getElementById('foodItem').value.trim();
+  const platform = document.getElementById('foodPlatform').value;
+  if (!food) return alert('Please enter what you want to order!');
+
+  const res  = await fetch('/api/food', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ food, platform })
+  });
+  const data = await res.json();
+  closeModal('food');
+
+  // Open food app URL
+  window.open(data.reply, '_blank');
+  addMessage('nithi', `🍕 Opening ${platform} for "${food}"...`);
+}
+
+// ── Email ─────────────────────────────────────────────────────────────────────
+
+async function sendEmail() {
+  const to      = document.getElementById('emailTo').value.trim();
+  const subject = document.getElementById('emailSubject').value.trim();
+  const body    = document.getElementById('emailBody').value.trim();
+  if (!to || !subject || !body) return alert('Please fill all fields!');
+
+  addMessage('user', `Send email to ${to}: "${subject}"`);
+  closeModal('email');
+
+  const res  = await fetch('/api/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, body })
+  });
+  const data = await res.json();
+  addMessage('nithi', data.reply);
+}
+
+// ── Call ──────────────────────────────────────────────────────────────────────
+
+async function makeCall() {
+  const to      = document.getElementById('callTo').value.trim();
+  const message = document.getElementById('callMessage').value.trim();
+  if (!to || !message) return alert('Please fill all fields!');
+
+  addMessage('user', `Call ${to} and say: "${message}"`);
+  closeModal('call');
+
+  const res  = await fetch('/api/call', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, message })
+  });
+  const data = await res.json();
+  addMessage('nithi', data.reply);
+}
+</script>
+</body>
+</html>
