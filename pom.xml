@@ -54,12 +54,6 @@
             <version>9.14.0</version>
         </dependency>
     </dependencies>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-test</artifactId>
-    <scope>test</scope>
-</dependency>
-
     <build>
         <plugins>
             <plugin>
