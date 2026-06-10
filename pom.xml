@@ -53,6 +53,13 @@
             <artifactId>twilio</artifactId>
             <version>9.14.0</version>
         </dependency>
+             
+      <!-- Swagger/OpenAPI Documentation -->
+       <dependency>
+         <groupId>org.springdoc</groupId>
+         <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+         <version>2.3.0</version>
+      </dependency>
 
     <!-- your existing dependencies -->
 
